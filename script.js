@@ -320,25 +320,79 @@ class AttendanceCalculator {
             }
         }
 
-        // 해당 월 데이터만 필터링
+        // 가장 많은 비중을 차지하는 월의 데이터만 필터링
         if (this.attendanceData.length > 0) {
-            const firstDate = this.attendanceData[0].date;
-            const targetMonth = firstDate.getMonth();
-            const targetYear = firstDate.getFullYear();
+            const monthCount = this.getMonthlyDataCount();
+            const dominantMonth = this.findDominantMonth(monthCount);
 
-            this.attendanceData = this.attendanceData.filter(record => {
-                return record.date.getMonth() === targetMonth &&
-                       record.date.getFullYear() === targetYear;
-            });
+            if (dominantMonth) {
+                const originalCount = this.attendanceData.length;
+                this.attendanceData = this.attendanceData.filter(record => {
+                    return record.date.getMonth() === dominantMonth.month &&
+                           record.date.getFullYear() === dominantMonth.year;
+                });
 
-            this.addDebugLog('해당 월 필터링 완료', {
-                targetMonth: targetMonth + 1,
-                targetYear: targetYear,
-                filteredCount: this.attendanceData.length
-            });
+                this.addDebugLog('가장 많은 데이터를 가진 월 필터링 완료', {
+                    originalCount: originalCount,
+                    monthlyBreakdown: monthCount,
+                    dominantMonth: dominantMonth.month + 1,
+                    dominantYear: dominantMonth.year,
+                    dominantCount: dominantMonth.count,
+                    filteredCount: this.attendanceData.length
+                });
+            }
         }
 
         this.addDebugLog('최종 파싱 완료', { count: this.attendanceData.length, data: this.attendanceData });
+    }
+
+    getMonthlyDataCount() {
+        const monthCount = {};
+
+        this.attendanceData.forEach(record => {
+            const year = record.date.getFullYear();
+            const month = record.date.getMonth();
+            const key = `${year}-${month}`;
+
+            if (!monthCount[key]) {
+                monthCount[key] = {
+                    year: year,
+                    month: month,
+                    count: 0
+                };
+            }
+            monthCount[key].count++;
+        });
+
+        this.addDebugLog('월별 데이터 개수 계산', monthCount);
+        return monthCount;
+    }
+
+    findDominantMonth(monthCount) {
+        let dominantMonth = null;
+        let maxCount = 0;
+
+        Object.values(monthCount).forEach(monthData => {
+            if (monthData.count > maxCount) {
+                maxCount = monthData.count;
+                dominantMonth = monthData;
+            }
+        });
+
+        this.addDebugLog('가장 많은 데이터를 가진 월 찾기', {
+            dominantMonth: dominantMonth ? {
+                year: dominantMonth.year,
+                month: dominantMonth.month + 1, // 디스플레이용 1-12월
+                count: dominantMonth.count
+            } : null,
+            allMonths: Object.values(monthCount).map(m => ({
+                year: m.year,
+                month: m.month + 1,
+                count: m.count
+            }))
+        });
+
+        return dominantMonth;
     }
 
     parseDate(dateValue) {
@@ -561,7 +615,7 @@ class AttendanceCalculator {
                 lowerStatus: status
             });
 
-            // H열에서 연차 시간 확인 (최우선) - "완료 ( 연차 8.00h )" 형식
+            // H열에서 시간 정보 확인 (최우선) - 모든 형식에서 숫자 추출
             if (record.hColumnData && record.hColumnData.trim() !== '') {
                 const hColumnValue = record.hColumnData.trim();
 
@@ -569,67 +623,45 @@ class AttendanceCalculator {
                     rawValue: hColumnValue
                 });
 
-                // "완료 ( 연차 8.00h )" 또는 "연차 8.00h" 형식에서 숫자 추출
-                const annualLeavePatterns = [
-                    /완료\s*\(\s*연차\s*(\d+(?:\.\d+)?)h?\s*\)/i, // 완료 ( 연차 8.00h )
-                    /완료\s*\(\s*연차\s*(\d+(?:\.\d+)?)\s*\)/i,   // 완료 ( 연차 8 )
-                    /연차\s*(\d+(?:\.\d+)?)h?/i,                  // 연차 8h 또는 연차 8
-                    /(\d+(?:\.\d+)?)h?\s*연차/i                   // 8h 연차 또는 8 연차
+                // H열에서 숫자 추출 (연차, 경조사, 기타 모든 경우)
+                // "완료 ( 연차 8.00h )", "완료 ( 경조사 2.00h )", "8.00", "4" 등 모든 형식 지원
+                const numberPatterns = [
+                    /완료\s*\(\s*[가-힣\s]*(\d+(?:\.\d+)?)h?\s*\)/i, // 완료 ( 연차 8.00h ), 완료 ( 경조사 2.00h )
+                    /(\d+(?:\.\d+)?)h?/i,                            // 8.00h, 8.00, 4 등
                 ];
 
-                let foundAnnualLeave = false;
-                for (let pattern of annualLeavePatterns) {
+                let foundTimeEntry = false;
+                for (let pattern of numberPatterns) {
                     const match = hColumnValue.match(pattern);
                     if (match) {
                         const hours = parseFloat(match[1]);
-                        const days = hours / 8;
-
-                        result.annualLeaveHours = hours; // 연차시간 별도 저장
-                        result.status = '연차';
-                        annualLeaveDays += days;
-                        foundAnnualLeave = true;
-
-                        this.addDebugLog(`${this.formatDate(record.date)} H열 연차 감지`, {
-                            pattern: pattern.source,
-                            rawValue: hColumnValue,
-                            matchedValue: match[1],
-                            hours: hours,
-                            days: days,
-                            totalAnnualLeave: annualLeaveDays
-                        });
-
-                        break;
-                    }
-                }
-
-                // 단순히 숫자만 있는 경우도 처리 (8.00, 4.00 등)
-                if (!foundAnnualLeave) {
-                    const simpleNumberMatch = hColumnValue.match(/^(\d+(?:\.\d+)?)$/);
-                    if (simpleNumberMatch) {
-                        const hours = parseFloat(simpleNumberMatch[1]);
                         if (hours > 0) {
                             const days = hours / 8;
 
-                            result.annualLeaveHours = hours;
-                            result.status = '연차';
+                            result.annualLeaveHours = hours; // 시간 정보 저장 (연차/경조사/기타 구분 없이)
+                            result.status = '연차'; // 모든 시간 정보를 연차로 처리
                             annualLeaveDays += days;
-                            foundAnnualLeave = true;
+                            foundTimeEntry = true;
 
-                            this.addDebugLog(`${this.formatDate(record.date)} H열 단순 숫자 연차 감지`, {
+                            this.addDebugLog(`${this.formatDate(record.date)} H열 시간 정보 감지`, {
+                                pattern: pattern.source,
                                 rawValue: hColumnValue,
+                                matchedValue: match[1],
                                 hours: hours,
                                 days: days,
                                 totalAnnualLeave: annualLeaveDays
                             });
+
+                            break;
                         }
                     }
                 }
 
-                // H열에서 연차가 감지되었다면 다른 연차 검사는 스킵
-                if (foundAnnualLeave) {
+                // H열에서 시간 정보가 감지되었다면 다른 연차 검사는 스킵
+                if (foundTimeEntry) {
                     // 여기서는 return하지 않고 계속 진행하여 기본 근무시간과 합산되도록 함
                 } else {
-                    // H열에서 연차를 찾지 못한 경우에만 다른 검사 진행
+                    // H열에서 시간 정보를 찾지 못한 경우에만 다른 검사 진행
 
                     // 상태 컬럼에서 연차 시간 확인 (두 번째 우선순위)
                     // '완료 ( 연차 8.00h )' 형식 처리
@@ -819,15 +851,22 @@ class AttendanceCalculator {
                 });
             }
 
-            // 모든 실근무시간을 합계에 누적 (0인 경우도 로그 출력)
-            if (result.actualWorkHours > 0) {
+            // 평일만 실근무시간을 합계에 누적 (휴일 근무 제외)
+            if (result.actualWorkHours > 0 && !this.isWeekend(record.date) && !this.isHoliday(record.date)) {
                 totalActualWorkHours += result.actualWorkHours;
 
-                this.addDebugLog(`${this.formatDate(record.date)} 실근무시간 누적`, {
+                this.addDebugLog(`${this.formatDate(record.date)} 실근무시간 누적 (평일만)`, {
                     actualWorkHours: result.actualWorkHours,
                     totalActualWorkHours: totalActualWorkHours,
                     status: result.status,
                     annualLeaveHours: result.annualLeaveHours
+                });
+            } else if (result.actualWorkHours > 0) {
+                this.addDebugLog(`${this.formatDate(record.date)} 휴일 근무 - 실근무시간 합계에서 제외`, {
+                    actualWorkHours: result.actualWorkHours,
+                    status: result.status,
+                    isWeekend: this.isWeekend(record.date),
+                    isHoliday: this.isHoliday(record.date)
                 });
             } else {
                 this.addDebugLog(`${this.formatDate(record.date)} 실근무시간 0 - 누적되지 않음`, {
@@ -881,10 +920,10 @@ class AttendanceCalculator {
         // 필요 근무시간 = 정상 근무일 * 8
         const requiredWorkHours = normalWorkDays * 8;
 
-        // L39: 정상 근무 시간 - 테이블에 표시된 실근무시간의 단순 합계
+        // L39: 정상 근무 시간 - 테이블에 표시된 평일 실근무시간의 합계 (휴일 근무 제외)
         let tableActualWorkHours = 0;
         processedData.forEach(record => {
-            if (record.actualWorkHours > 0) {
+            if (record.actualWorkHours > 0 && !this.isWeekend(record.date) && !this.isHoliday(record.date)) {
                 tableActualWorkHours += record.actualWorkHours;
             }
         });
@@ -1307,10 +1346,10 @@ class AttendanceCalculator {
     }
 
     recalculateAndUpdateResults() {
-        // 테이블에 표시된 실근무시간의 합계 계산
+        // 테이블에 표시된 평일 실근무시간의 합계 계산 (휴일 근무 제외)
         let tableActualWorkHours = 0;
         this.calculatedResults.detailedData.forEach(record => {
-            if (record.actualWorkHours > 0) {
+            if (record.actualWorkHours > 0 && !this.isWeekend(record.date) && !this.isHoliday(record.date)) {
                 tableActualWorkHours += record.actualWorkHours;
             }
         });
