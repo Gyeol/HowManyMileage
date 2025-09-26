@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>근태 계산기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>근태 계산기</h1>
+            <p>엑셀 파일을 업로드하여 근태 현황을 확인하세요</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <p>엑셀 파일을 드래그하거나 클릭하여 업로드</p>
+                        <small>지원 형식: .xlsx, .xls</small>
+                    </div>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+                </div>
+            </section>
+
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h2>근태 현황</h2>
+
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>정상 근무일</h3>
+                        <span class="value" id="normalWorkDays">0</span>
+                        <small>일</small>
+                    </div>
+
+                    <div class="card shortage" id="shortageCard">
+                        <h3>부족분 가용시간</h3>
+                        <span class="value" id="shortageHours">0</span>
+                        <small>시간</small>
+                    </div>
+                </div>
+
+                <div class="debug-summary-cards" style="margin-top: 20px;">
+                    <div class="card debug-card">
+                        <h3>정상 근무시간 (실근무)</h3>
+                        <span class="value" id="normalWorkHours">0</span>
+                        <small>시간</small>
+                    </div>
+
+                    <div class="card debug-card">
+                        <h3>필요 근무시간</h3>
+                        <span class="value" id="requiredWorkHours">0</span>
+                        <small>시간</small>
+                    </div>
+                </div>
+
+                <div class="detailed-table">
+                    <h3>상세 근태 내역</h3>
+                    <div class="table-container">
+                        <table id="detailTable">
+                            <thead>
+                                <tr>
+                                    <th>날짜</th>
+                                    <th>출근시간</th>
+                                    <th>퇴근시간</th>
+                                    <th>근무시간</th>
+                                    <th>휴게시간</th>
+                                    <th>연차시간</th>
+                                    <th>실근무시간</th>
+                                    <th>공휴일</th>
+                                    <th>비고</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="debug-section" id="debugSection" style="display: none;">
+                <h3>디버깅 정보</h3>
+                <div class="debug-content">
+                    <button id="toggleDebug" class="debug-toggle">디버깅 정보 표시</button>
+                    <pre id="debugInfo" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 0.9rem; overflow-x: auto; max-height: 300px; margin-top: 10px;"></pre>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.upload-section {
+    margin-bottom: 30px;
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 60px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: white;
+}
+
+.upload-area:hover {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.upload-area.dragover {
+    border-color: #667eea;
+    background-color: #f0f2ff;
+    transform: scale(1.02);
+}
+
+.upload-content {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.upload-area p {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: #666;
+}
+
+.upload-area small {
+    color: #999;
+}
+
+.results-section {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.results-section h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.summary-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.debug-summary-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.debug-summary-cards .card {
+    margin: 0;
+}
+
+.debug-card {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+}
+
+.time-input, .annual-leave-input {
+    width: 80px;
+    padding: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.time-input:focus, .annual-leave-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.annual-leave-input {
+    background-color: #f8f9ff;
+}
+
+.card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 30px 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    min-width: 300px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card.shortage {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+}
+
+.card.surplus {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.card.balanced {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+.card h3 {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.card .value {
+    display: block;
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.card small {
+    opacity: 0.8;
+    font-size: 0.8rem;
+}
+
+.detailed-table {
+    margin-top: 30px;
+}
+
+.detailed-table h3 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.table-container {
+    overflow-x: auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+tbody tr:hover {
+    background-color: #f8f9ff;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.status-normal {
+    color: #28a745;
+}
+
+.status-late {
+    color: #dc3545;
+}
+
+.status-leave {
+    color: #6c757d;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.holiday-section {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.holiday-section h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.holiday-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.holiday-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+}
+
+.holiday-checkbox input {
+    margin-right: 8px;
+}
+
+.holiday-checkbox label {
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    header h1 {
+        font-size: 2rem;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .card {
+        padding: 20px;
+    }
+
+    .card .value {
+        font-size: 1.8rem;
+    }
+
+    table {
+        font-size: 0.85rem;
+    }
+
+    th, td {
+        padding: 8px 10px;
+    }
+
+    .holiday-checkboxes {
+        grid-template-columns: 1fr;
+    }
+}
