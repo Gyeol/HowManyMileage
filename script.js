@@ -501,17 +501,26 @@ class AttendanceCalculator {
 
     calculateBreakTime(workHours) {
         // L15 수식 참고: =IF(G9=0,,IF(HOUR($G9)>=4.5,1,IF(HOUR($G9)<4.5,0.5,)))
+        // J24 수식 참고: =IFERROR(IF(HOUR($G32)>=13,1,),) - 13시간 이상 근무시 야간 휴게시간 1시간 추가
         if (workHours === 0) {
             return 0;
         }
 
+        let breakHours = 0;
+
+        // 기본 휴게시간 계산
         if (workHours >= 4.5) {
-            return 1; // 4.5시간 이상이면 1시간 휴게
+            breakHours = 1; // 4.5시간 이상이면 1시간 휴게
         } else if (workHours < 4.5) {
-            return 0.5; // 4.5시간 미만이면 0.5시간 휴게
+            breakHours = 0.5; // 4.5시간 미만이면 0.5시간 휴게
         }
 
-        return 0;
+        // 야간 휴게시간 추가 (13시간 이상 근무 시)
+        if (workHours >= 13) {
+            breakHours += 1; // 야간 휴게시간 1시간 추가
+        }
+
+        return breakHours;
     }
 
     isWeekend(date) {
